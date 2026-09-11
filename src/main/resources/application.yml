@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: hire-core
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/hirecore}
+    username: ${SPRING_DATASOURCE_USERNAME:hirecore}
+    password: ${SPRING_DATASOURCE_PASSWORD:hirecore}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # 'update' es cómodo para desarrollo. En producción usar 'validate' + migraciones (Flyway/Liquibase).
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
