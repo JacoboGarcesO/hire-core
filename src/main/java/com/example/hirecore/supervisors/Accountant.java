@@ -1,10 +1,8 @@
 package com.example.hirecore.supervisors;
 
-import com.example.hirecore.notifications.IObserver;
-
-public class Accountant extends Supervisor implements IObserver {
+public class Accountant extends Supervisor {
     @Override
-    public void notify(String message) {
-        System.out.println(message);
+    protected String getRole() {
+        return "Contador";
     }
 }

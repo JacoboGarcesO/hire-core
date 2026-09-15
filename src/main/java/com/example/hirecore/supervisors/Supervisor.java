@@ -1,9 +1,27 @@
 package com.example.hirecore.supervisors;
 
-public abstract class Supervisor {
+import com.example.hirecore.notifications.IObserver;
+
+import java.util.UUID;
+
+public abstract class Supervisor implements IObserver {
+    private final String id = UUID.randomUUID().toString();
     private String name;
     private String email;
     private String password;
+
+    /** Etiqueta del rol, para que el mensaje deje claro quién lo recibió. */
+    protected abstract String getRole();
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public void notify(String message) {
+        System.out.println("[" + getRole() + "] " + message);
+    }
 
     public String getName() {
         return name;
