@@ -29,6 +29,12 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// El código fuente usa tildes/ñ (nombres de candidatos); sin esto, en Windows
+// javac compila con cp1252 por defecto y falla o corrompe esos caracteres.
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
 // Solo queremos el jar ejecutable de Spring Boot, no el '-plain.jar'.
 tasks.named('jar') {
     enabled = false

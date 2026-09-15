@@ -12,8 +12,8 @@ import java.util.UUID;
 
 /**
  * El candidato también es observador: cuando {@code CandidateManager} lo
- * suscribe temporalmente a una etapa para avisarle de un cambio, recibe el
- * mensaje a través de {@link #notify(String)}.
+ * suscribe temporalmente a una etapa para avisarle de un cambio, recibe la
+ * notificación con el formato de correo por defecto de {@link IObserver}.
  *
  * <p>Además mantiene, de forma completamente independiente entre sí, dos
  * mecanismos distintos:
@@ -49,8 +49,8 @@ public class Candidate implements IObserver {
     }
 
     @Override
-    public void notify(String message) {
-        System.out.println("[Candidato] " + message);
+    public String getRole() {
+        return "Candidato";
     }
 
     // ------------------------------------------------------------------

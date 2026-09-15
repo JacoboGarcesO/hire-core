@@ -10,12 +10,20 @@ import com.example.hirecore.supervisors.Supervisor;
  *
  * <p>En cada transición, el candidato se suscribe de forma TEMPORAL —solo
  * mientras dura esa transición— a la etapa de la que sale y a la que entra:
- * se notifica en ambas y de inmediato se le retira de las dos. Así nunca
- * queda como observador permanente de una etapa, que es compartida por todos
- * los candidatos que pasan por ella; si persistiera, el movimiento de uno
- * notificaría también a los demás que están parados en esa misma etapa.
+ * se notifica en ambas (con formato de correo, ver {@link com.example.hirecore.notifications.IObserver})
+ * y de inmediato se le retira de las dos. Así nunca queda como observador
+ * permanente de una etapa, que es compartida por todos los candidatos que
+ * pasan por ella; si persistiera, el movimiento de uno notificaría también a
+ * los demás que están parados en esa misma etapa.
  */
 public class CandidateManager {
+
+    private final IStage rejectedStage;
+
+    /** @param rejectedStage la etapa (fuera de la cadena normal) a la que se manda a un candidato rechazado. */
+    public CandidateManager(IStage rejectedStage) {
+        this.rejectedStage = rejectedStage;
+    }
 
     /**
      * Avanza al candidato a la siguiente etapa.
@@ -29,10 +37,11 @@ public class CandidateManager {
         IStage previousStage = candidate.getStage();
         IStage nextStage = previousStage.ahead();
 
-        String transition = candidate.getName() + " avanzó de " + previousStage.getClass().getSimpleName()
+        String subject = "Cambio de etapa: " + candidate.getName();
+        String content = candidate.getName() + " avanzó de " + previousStage.getClass().getSimpleName()
                 + " a " + nextStage.getClass().getSimpleName();
 
-        notifyTransition(candidate, previousStage, nextStage, transition);
+        notifyTransition(candidate, previousStage, nextStage, subject, content);
 
         candidate.setStage(nextStage);        // guarda un memento de la etapa anterior y aplica el cambio
         candidate.recordChange(performedBy);  // deja constancia en el historial de auditoría
@@ -58,28 +67,50 @@ public class CandidateManager {
         }
         IStage stageAfterUndo = candidate.getStage();
 
-        String transition = candidate.getName() + " deshizo su cambio de etapa: volvió de "
+        String subject = "Regresión de etapa: " + candidate.getName();
+        String content = candidate.getName() + " deshizo su cambio de etapa: volvió de "
                 + stageBeforeUndo.getClass().getSimpleName() + " a " + stageAfterUndo.getClass().getSimpleName();
 
-        notifyTransition(candidate, stageBeforeUndo, stageAfterUndo, transition);
+        notifyTransition(candidate, stageBeforeUndo, stageAfterUndo, subject, content);
         candidate.recordChange(performedBy); // la regresión también queda en el historial
     }
 
     /**
-     * Suscribe temporalmente al candidato a ambas etapas, notifica en cada
-     * una (con el nombre de la etapa que emite, para distinguir el aviso de
-     * salida del de entrada aunque el resto del mensaje sea igual) y lo
-     * retira de las dos.
+     * Rechaza al candidato: lo manda a la etapa de rechazo sin importar en
+     * cuál estuviera (no sigue la cadena de {@link IStage#ahead()}). Usa la
+     * misma lógica de notificación que {@link #advance} y también queda
+     * registrado en el historial.
+     *
+     * @param performedBy el supervisor que rechaza al candidato.
      */
-    private void notifyTransition(Candidate candidate, IStage fromStage, IStage toStage, String message) {
+    public void reject(Candidate candidate, Supervisor performedBy) {
+        IStage previousStage = candidate.getStage();
+
+        String subject = "Candidato rechazado: " + candidate.getName();
+        String content = candidate.getName() + " fue rechazado (estaba en "
+                + previousStage.getClass().getSimpleName() + ").";
+
+        notifyTransition(candidate, previousStage, rejectedStage, subject, content);
+
+        candidate.setStage(rejectedStage);
+        candidate.recordChange(performedBy);
+    }
+
+    /**
+     * Suscribe temporalmente al candidato a ambas etapas, notifica en cada
+     * una (el contenido indica desde qué etapa se emitió, para distinguir el
+     * aviso de salida del de entrada aunque el resto sea igual) y lo retira
+     * de las dos.
+     */
+    private void notifyTransition(Candidate candidate, IStage fromStage, IStage toStage, String subject, String content) {
         IObservable fromObservable = asObservable(fromStage);
         IObservable toObservable = asObservable(toStage);
 
         fromObservable.addObserver(candidate);
         toObservable.addObserver(candidate);
 
-        fromObservable.notifyObservers("(" + fromStage.getClass().getSimpleName() + ") " + message);
-        toObservable.notifyObservers("(" + toStage.getClass().getSimpleName() + ") " + message);
+        fromObservable.notifyObservers(subject, "(" + fromStage.getClass().getSimpleName() + ") " + content);
+        toObservable.notifyObservers(subject, "(" + toStage.getClass().getSimpleName() + ") " + content);
 
         fromObservable.removeObserver(candidate);
         toObservable.removeObserver(candidate);

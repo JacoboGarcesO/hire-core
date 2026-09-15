@@ -9,19 +9,45 @@ import com.example.hirecore.stages.IStage;
 import com.example.hirecore.stages.Interview;
 import com.example.hirecore.stages.Offer;
 import com.example.hirecore.stages.ReferencesVerify;
+import com.example.hirecore.stages.Rejected;
 import com.example.hirecore.stages.TechTest;
 import com.example.hirecore.supervisors.Accountant;
 import com.example.hirecore.supervisors.Manager;
 import com.example.hirecore.supervisors.Recruiter;
 
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 public class StagesFactory {
 
     private static final int CANDIDATE_COUNT = 10;
     private static final Random RANDOM = new Random();
+
+    private static final String[] LATIN_NAMES = {
+            "Juan Pérez", "María González", "Carlos Rodríguez", "Ana Martínez", "Luis Hernández",
+            "Sofía López", "Diego Sánchez", "Valentina Ramírez", "Andrés Torres", "Camila Flores",
+            "Miguel Rivera", "Isabella Gómez", "José Díaz", "Lucía Vargas", "Javier Castro",
+            "Daniela Ortiz", "Fernando Ruiz", "Gabriela Morales", "Ricardo Jiménez", "Paula Álvarez",
+            "Alejandro Romero", "Valeria Suárez", "Sebastián Medina", "Renata Herrera", "Mateo Guerrero",
+            "Antonella Rojas", "Emilio Mendoza", "Martina Delgado", "Gonzalo Castillo", "Ximena Ortega",
+            "Nicolás Vega", "Fernanda Cruz", "Rodrigo Reyes", "Catalina Molina", "Tomás Aguilar",
+            "Julieta Campos", "Santiago Vásquez", "Regina Contreras", "Emiliano Silva", "Antonia Navarro",
+            "Maximiliano Peña", "Constanza Fuentes", "Ignacio Cabrera", "Josefina Domínguez", "Joaquín Espinoza",
+            "Amparo Salazar", "Pablo Cordero", "Pilar Bravo", "Cristian Miranda", "Rocío Paredes",
+            "Iván Cortés", "Adriana Sepúlveda", "Marcos Figueroa", "Verónica Cisneros", "Esteban Carrasco",
+            "Beatriz Escobar", "Rafael Lara", "Alejandra Ponce", "Enrique Zúñiga", "Mónica Rincón",
+            "Guillermo Pacheco", "Carolina Vera", "Hugo Meza", "Teresa Godoy", "Óscar Salinas",
+            "Marisol Quintero", "Vicente Osorio", "Dolores Palacios", "Álvaro Villalobos", "Esperanza Roldán",
+            "Manuel Chávez", "Consuelo Bernal", "Leonardo Serrano", "Guadalupe Montes", "Federico Solano",
+            "Milagros Acosta", "Arturo Barrios", "Soledad Nieves", "Raúl Cordero", "Yolanda Prieto",
+            "Salvador Aranda", "Inés Camacho", "Domingo Lozano", "Remedios Franco", "Gerardo Ibarra",
+            "Encarnación Andrade", "Bernardo Cuevas", "Asunción Vidal", "Ramiro Estrada", "Concepción Galindo",
+            "Wilfredo Ochoa", "Perla Benítez", "Norberto Arroyo", "Aurora Villanueva", "Eduardo Cárdenas",
+            "Leticia Marín", "Rogelio Calderón", "Mireya Zamora", "Anselmo Colón", "Esmeralda Robledo",
+    };
 
     public static IStage createStages() {
         IStage contractedStage = new Contracted(null);
@@ -34,13 +60,15 @@ public class StagesFactory {
 
     /**
      * Construye el pipeline completo: la cadena de etapas, los roles
-     * (reclutador, gerente de contratación, nómina), 10 candidatos asignados
-     * aleatoriamente a cualquier etapa salvo la última, y las suscripciones
-     * de notificación diferenciadas entre todos ellos.
+     * (reclutador, gerente de contratación, nómina), 10 candidatos —con
+     * nombre real tomado al azar de {@link #LATIN_NAMES}— que arrancan todos
+     * en la primera etapa, y las suscripciones de notificación diferenciadas
+     * entre todos ellos.
      */
     public static HiringPipeline createHiringPipeline() {
         List<IStage> stages = collectStages(createStages());
-        List<IStage> assignableStages = stages.subList(0, stages.size() - 1); // todas menos la última (Contracted)
+        IStage firstStage = stages.get(0); // todos los candidatos entran por acá (Applied)
+        IStage rejectedStage = new Rejected(null); // fuera de la cadena normal: a esta se llega desde cualquier etapa
 
         Recruiter recruiter = new Recruiter();
         recruiter.setName("Laura Gómez");
@@ -54,11 +82,13 @@ public class StagesFactory {
         accountant.setName("Marta Ruiz");
         accountant.setEmail("marta.ruiz@hire-core.com");
 
-        List<Candidate> candidates = createCandidates(CANDIDATE_COUNT, assignableStages);
+        List<Candidate> candidates = createCandidates(CANDIDATE_COUNT, firstStage);
 
         registerObservers(stages, recruiter, manager, accountant);
+        ((IObservable) rejectedStage).addObserver(recruiter); // el reclutador también se entera de los rechazos
 
-        return new HiringPipeline(stages, candidates, recruiter, manager, accountant, new CandidateManager());
+        return new HiringPipeline(stages, candidates, recruiter, manager, accountant,
+                new CandidateManager(rejectedStage));
     }
 
     /** Recorre la cadena de etapas desde la cabeza hasta la última (nextStage == null). */
@@ -76,13 +106,21 @@ public class StagesFactory {
         return stages;
     }
 
-    private static List<Candidate> createCandidates(int count, List<IStage> assignableStages) {
+    private static List<Candidate> createCandidates(int count, IStage firstStage) {
         List<Candidate> candidates = new ArrayList<>();
-        for (int i = 1; i <= count; i++) {
-            IStage stage = assignableStages.get(RANDOM.nextInt(assignableStages.size()));
-            candidates.add(new Candidate("Candidato " + i, "candidato" + i + "@example.com", stage));
+        for (int i = 0; i < count; i++) {
+            String name = LATIN_NAMES[RANDOM.nextInt(LATIN_NAMES.length)];
+            candidates.add(new Candidate(name, toEmail(name), firstStage));
         }
         return candidates;
+    }
+
+    /** Deriva un correo simple a partir del nombre: sin tildes, en minúsculas, espacios por puntos. */
+    private static String toEmail(String name) {
+        String withoutAccents = Normalizer.normalize(name, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "");
+        String localPart = withoutAccents.toLowerCase(Locale.ROOT).replace(' ', '.');
+        return localPart + "@example.com";
     }
 
     /**

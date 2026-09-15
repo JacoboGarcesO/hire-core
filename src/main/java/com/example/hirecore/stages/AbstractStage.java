@@ -31,9 +31,9 @@ public abstract class AbstractStage implements IStage, IObservable {
     }
 
     @Override
-    public void notifyObservers(String message) {
+    public void notifyObservers(String subject, String content) {
         for (IObserver observer : observers) {
-            observer.notify(message);
+            observer.notify(subject, content);
         }
     }
 

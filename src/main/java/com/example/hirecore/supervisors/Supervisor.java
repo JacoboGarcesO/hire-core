@@ -10,8 +10,9 @@ public abstract class Supervisor implements IObserver {
     private String email;
     private String password;
 
-    /** Etiqueta del rol, para que el mensaje deje claro quién lo recibió. */
-    protected abstract String getRole();
+    /** Cómo se identifica este supervisor en el correo simulado, p. ej. "Reclutador". */
+    @Override
+    public abstract String getRole();
 
     @Override
     public String getId() {
@@ -19,10 +20,6 @@ public abstract class Supervisor implements IObserver {
     }
 
     @Override
-    public void notify(String message) {
-        System.out.println("[" + getRole() + "] " + message);
-    }
-
     public String getName() {
         return name;
     }
@@ -31,6 +28,7 @@ public abstract class Supervisor implements IObserver {
         this.name = name;
     }
 
+    @Override
     public String getEmail() {
         return email;
     }

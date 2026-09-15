@@ -2,7 +2,7 @@ package com.example.hirecore.supervisors;
 
 public class Recruiter extends Supervisor {
     @Override
-    protected String getRole() {
+    public String getRole() {
         return "Reclutador";
     }
 }
