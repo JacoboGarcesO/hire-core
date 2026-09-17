@@ -1,0 +1,458 @@
+<title>Diagrama de Clases de Hire Core</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #e7edf3;
+    --paper: #ffffff;
+    --ink: #12293f;
+    --ink-soft: #48607a;
+    --line: #c3d2de;
+    --grid: rgba(18, 41, 63, 0.05);
+    --accent: #b3341f;
+    --accent-contrast: #fff8f5;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #08172a;
+      --paper: #0e2038;
+      --ink: #eaf3fb;
+      --ink-soft: #9fb8cf;
+      --line: #234764;
+      --grid: rgba(255, 255, 255, 0.05);
+      --accent: #ff7a5c;
+      --accent-contrast: #2a0d06;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #08172a;
+    --paper: #0e2038;
+    --ink: #eaf3fb;
+    --ink-soft: #9fb8cf;
+    --line: #234764;
+    --grid: rgba(255, 255, 255, 0.05);
+    --accent: #ff7a5c;
+    --accent-contrast: #2a0d06;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    padding: 32px 20px 56px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .sheet {
+    width: 100%;
+    max-width: 1040px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ---------- title block (engineering-drawing style) ---------- */
+  .titleblock {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+  .titleblock h1 {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    letter-spacing: 0.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .titleblock .sub {
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    margin-top: 4px;
+    max-width: 60ch;
+  }
+  .stamp {
+    display: flex;
+    gap: 18px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    flex-wrap: wrap;
+  }
+  .stamp .field { display: flex; flex-direction: column; gap: 2px; }
+  .stamp .field b {
+    color: var(--ink);
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .stamp .field span {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ---------- diagram sheet, with crop-mark corners ---------- */
+  .diagram-panel {
+    position: relative;
+    background:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+      var(--paper);
+    background-size: 24px 24px, 24px 24px, auto;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 28px;
+    overflow-x: auto;
+  }
+  .diagram-panel::before,
+  .diagram-panel::after,
+  .diagram-panel .tick-tr,
+  .diagram-panel .tick-br {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-color: var(--ink-soft);
+    opacity: 0.5;
+  }
+  .diagram-panel::before { top: 8px; left: 8px; border-top: 2px solid; border-left: 2px solid; }
+  .diagram-panel::after { bottom: 8px; left: 8px; border-bottom: 2px solid; border-left: 2px solid; }
+  .diagram-panel .tick-tr { top: 8px; right: 8px; border-top: 2px solid; border-right: 2px solid; }
+  .diagram-panel .tick-br { bottom: 8px; right: 8px; border-bottom: 2px solid; border-right: 2px solid; }
+
+  .diagram-panel pre.mermaid {
+    margin: 0;
+    min-width: 900px;
+  }
+
+  figcaption {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    padding: 4px 4px 0;
+  }
+
+  /* ---------- legend ---------- */
+  .legend {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px 24px;
+  }
+  .legend h2 {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+  }
+  .legend ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px 20px;
+  }
+  .legend li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+  }
+  .legend .mark {
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 0.95rem;
+    width: 3.2em;
+    flex: none;
+    text-align: center;
+  }
+
+  /* ---------- package index ---------- */
+  .packages {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px 24px;
+  }
+  .packages h2 {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin: 0 0 12px;
+  }
+  .packages dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 16px;
+    margin: 0;
+  }
+  .packages dt {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .packages dd {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 640px) {
+    .titleblock { flex-direction: column; }
+    .packages dl { grid-template-columns: 1fr; }
+    .packages dt { margin-top: 6px; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="titleblock">
+    <div>
+      <h1>HIRE CORE — DIAGRAMA DE CLASES</h1>
+      <p class="sub">Pipeline de contratación: Chain of Responsibility para las etapas, Observer para las
+        notificaciones, Memento para deshacer, más la fábrica y el menú que arman todo.</p>
+    </div>
+    <div class="stamp">
+      <div class="field"><span>Paquetes</span><b>8</b></div>
+      <div class="field"><span>Clases</span><b>23</b></div>
+      <div class="field"><span>Notación</span><b>UML</b></div>
+    </div>
+  </header>
+
+  <figure class="diagram-panel">
+    <span class="tick-tr"></span><span class="tick-br"></span>
+    <pre class="mermaid">
+classDiagram
+    direction TB
+
+    namespace hirecore {
+        class HireCoreApplication {
+            +main(String[])$
+        }
+        class Candidate {
+            -id String
+            -stage IStage
+            -history List~CandidateChangeRecord~
+            -stageMementoCaretaker StageMementoCaretaker
+            +getRole() String
+            +recordChange(Supervisor)
+            +undoStageChange() boolean
+            +setStage(IStage)
+        }
+        class CandidateChangeRecord {
+            -candidateCopy Candidate
+            -changedBy Supervisor
+            -changedAt LocalDateTime
+        }
+    }
+
+    namespace notifications {
+        class IObserver {
+            <<interface>>
+            +getId() String
+            +getRole() String
+            +notify(subject, content)
+        }
+        class IObservable {
+            <<interface>>
+            +notifyObservers(subject, content)
+            +addObserver(IObserver)
+            +removeObserver(IObserver)
+        }
+    }
+
+    namespace stages {
+        class IStage {
+            <<interface>>
+            +ahead() IStage
+        }
+        class AbstractStage {
+            <<abstract>>
+            -nextStage IStage
+            -observers List~IObserver~
+            +ahead() IStage
+            +notifyObservers(subject, content)
+            +addObserver(IObserver)
+            +removeObserver(IObserver)
+        }
+        class Applied
+        class Interview
+        class TechTest
+        class Offer
+        class ReferencesVerify
+        class Contracted
+        class Rejected
+    }
+
+    namespace supervisors {
+        class Supervisor {
+            <<abstract>>
+            -name String
+            -email String
+            -password String
+            +getRole()* String
+        }
+        class Recruiter
+        class Manager
+        class Accountant
+    }
+
+    namespace memento {
+        class StageMemento {
+            -stage IStage
+        }
+        class StageMementoCaretaker {
+            -mementos Deque~StageMemento~
+            +save(IStage)
+            +undo() Optional~IStage~
+            +hasHistory() boolean
+        }
+    }
+
+    namespace manager {
+        class CandidateManager {
+            -rejectedStage IStage
+            +advance(Candidate, Supervisor)
+            +undoLastStageChange(Candidate, Supervisor)
+            +reject(Candidate, Supervisor)
+        }
+    }
+
+    namespace factory {
+        class StagesFactory {
+            <<utility>>
+            +createStages()$ IStage
+            +createHiringPipeline()$ HiringPipeline
+        }
+        class HiringPipeline {
+            -stages List~IStage~
+            -candidates List~Candidate~
+            -recruiter Recruiter
+            -manager Manager
+            -accountant Accountant
+            -candidateManager CandidateManager
+        }
+    }
+
+    namespace ui {
+        class HireCoreMenu {
+            -pipeline HiringPipeline
+            +run()
+        }
+    }
+
+    IStage <|.. AbstractStage
+    IObservable <|.. AbstractStage
+    AbstractStage <|-- Applied
+    AbstractStage <|-- Interview
+    AbstractStage <|-- TechTest
+    AbstractStage <|-- Offer
+    AbstractStage <|-- ReferencesVerify
+    AbstractStage <|-- Contracted
+    AbstractStage <|-- Rejected
+    AbstractStage --> IStage : nextStage
+    AbstractStage "1" o-- "0..*" IObserver : observers
+
+    IObserver <|.. Supervisor
+    IObserver <|.. Candidate
+    Supervisor <|-- Recruiter
+    Supervisor <|-- Manager
+    Supervisor <|-- Accountant
+
+    Candidate --> IStage : stage
+    Candidate *-- StageMementoCaretaker
+    Candidate "1" --> "0..*" CandidateChangeRecord : history
+    CandidateChangeRecord --> Candidate : candidateCopy
+    CandidateChangeRecord --> Supervisor : changedBy
+
+    StageMementoCaretaker "1" o-- "0..*" StageMemento : mementos
+    StageMemento --> IStage : stage
+
+    CandidateManager ..> Candidate : advance / reject / undo
+    CandidateManager ..> Supervisor : performedBy
+    CandidateManager --> IStage : rejectedStage
+    CandidateManager ..> IObservable : notifyTransition
+
+    StagesFactory ..> AbstractStage : instancia las 7 etapas
+    StagesFactory ..> Recruiter : crea
+    StagesFactory ..> Manager : crea
+    StagesFactory ..> Accountant : crea
+    StagesFactory ..> Candidate : crea
+    StagesFactory ..> CandidateManager : crea
+    StagesFactory ..> HiringPipeline : ensambla
+
+    HiringPipeline "1" --> "0..*" IStage : stages
+    HiringPipeline "1" --> "0..*" Candidate : candidates
+    HiringPipeline --> Recruiter
+    HiringPipeline --> Manager
+    HiringPipeline --> Accountant
+    HiringPipeline --> CandidateManager
+
+    HireCoreApplication ..> StagesFactory : createHiringPipeline()
+    HireCoreApplication ..> HireCoreMenu : crea
+    HireCoreMenu --> HiringPipeline
+    </pre>
+    <figcaption>Las 8 cajas de fondo son los paquetes reales del proyecto. Flechas huecas = herencia/implementación;
+      diamante = todo-parte; flecha sólida = referencia guardada; flecha punteada = solo se usa de paso (parámetro).</figcaption>
+  </figure>
+
+  <section class="legend">
+    <h2>Notación</h2>
+    <ul>
+      <li><span class="mark">──▷</span> Extiende (herencia de clase)</li>
+      <li><span class="mark">┈┈▷</span> Implementa (interfaz)</li>
+      <li><span class="mark">──◆</span> Composición (el todo crea y destruye la parte)</li>
+      <li><span class="mark">──◇</span> Agregación (guarda una colección de la parte)</li>
+      <li><span class="mark">──&gt;</span> Asociación (guarda una referencia)</li>
+      <li><span class="mark">┈┈&gt;</span> Dependencia (la usa como parámetro, no la guarda)</li>
+    </ul>
+  </section>
+
+  <section class="packages">
+    <h2>Qué hace cada paquete</h2>
+    <dl>
+      <dt>hirecore</dt>
+      <dd><code>HireCoreApplication</code> (main), <code>Candidate</code> y su historial de auditoría
+        (<code>CandidateChangeRecord</code>).</dd>
+
+      <dt>notifications</dt>
+      <dd>Observer genérico: <code>IObserver</code> (con el correo simulado por defecto) e <code>IObservable</code>.</dd>
+
+      <dt>stages</dt>
+      <dd>Las 7 etapas del pipeline, todas heredando de <code>AbstractStage</code> — ahí vive la cadena
+        (<code>ahead()</code>) y la lista de observadores.</dd>
+
+      <dt>supervisors</dt>
+      <dd><code>Supervisor</code> abstracto y sus 3 roles (Reclutador, Manager, Contador), cada uno solo
+        distinto por <code>getRole()</code>.</dd>
+
+      <dt>memento</dt>
+      <dd>Deshacer cambios de etapa: <code>StageMemento</code> (opaca, de paquete) y su
+        <code>StageMementoCaretaker</code>.</dd>
+
+      <dt>manager</dt>
+      <dd><code>CandidateManager</code>: el único que sabe avanzar, deshacer o rechazar un candidato.</dd>
+
+      <dt>factory</dt>
+      <dd><code>StagesFactory</code> construye todo el mundo (etapas, roles, candidatos) y lo entrega
+        empaquetado en un <code>HiringPipeline</code>.</dd>
+
+      <dt>ui</dt>
+      <dd><code>HireCoreMenu</code>: el menú de <code>JOptionPane</code> que expone todo lo anterior.</dd>
+    </dl>
+  </section>
+
+</div>

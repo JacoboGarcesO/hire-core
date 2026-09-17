@@ -9,7 +9,6 @@ import com.example.hirecore.supervisors.Recruiter;
 
 import java.util.List;
 
-/** Resultado de construir el pipeline: todo lo que necesita quien lo use. */
 public class HiringPipeline {
     private final List<IStage> stages;
     private final List<Candidate> candidates;

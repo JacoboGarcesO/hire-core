@@ -58,17 +58,10 @@ public class StagesFactory {
         return new Applied(interviewStage);
     }
 
-    /**
-     * Construye el pipeline completo: la cadena de etapas, los roles
-     * (reclutador, gerente de contratación, nómina), 10 candidatos —con
-     * nombre real tomado al azar de {@link #LATIN_NAMES}— que arrancan todos
-     * en la primera etapa, y las suscripciones de notificación diferenciadas
-     * entre todos ellos.
-     */
     public static HiringPipeline createHiringPipeline() {
         List<IStage> stages = collectStages(createStages());
-        IStage firstStage = stages.get(0); // todos los candidatos entran por acá (Applied)
-        IStage rejectedStage = new Rejected(null); // fuera de la cadena normal: a esta se llega desde cualquier etapa
+        IStage firstStage = stages.get(0);
+        IStage rejectedStage = new Rejected(null);
 
         Recruiter recruiter = new Recruiter();
         recruiter.setName("Laura Gómez");
@@ -91,7 +84,6 @@ public class StagesFactory {
                 new CandidateManager(rejectedStage));
     }
 
-    /** Recorre la cadena de etapas desde la cabeza hasta la última (nextStage == null). */
     private static List<IStage> collectStages(IStage head) {
         List<IStage> stages = new ArrayList<>();
         IStage current = head;
@@ -115,7 +107,6 @@ public class StagesFactory {
         return candidates;
     }
 
-    /** Deriva un correo simple a partir del nombre: sin tildes, en minúsculas, espacios por puntos. */
     private static String toEmail(String name) {
         String withoutAccents = Normalizer.normalize(name, Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "");
@@ -123,21 +114,6 @@ public class StagesFactory {
         return localPart + "@example.com";
     }
 
-    /**
-     * Notificaciones diferenciadas:
-     * <ul>
-     *   <li>Reclutador: todas las etapas (de cualquier candidato).</li>
-     *   <li>Gerente de contratación: solo Oferta y Contratado.</li>
-     *   <li>Nómina (accountant): solo Contratado.</li>
-     * </ul>
-     *
-     * <p>El candidato NO se registra aquí de forma permanente: las etapas son
-     * instancias compartidas por todos los candidatos que pasan por ellas, así
-     * que dejarlo suscrito haría que el movimiento de uno notificara también a
-     * los demás que están en esa misma etapa. En cambio,
-     * {@link CandidateManager#advance} lo suscribe solo durante cada
-     * transición y lo retira de inmediato.
-     */
     private static void registerObservers(List<IStage> stages, Recruiter recruiter, Manager manager,
                                           Accountant accountant) {
         for (IStage stage : stages) {
@@ -152,5 +128,4 @@ public class StagesFactory {
             }
         }
     }
-
 }
